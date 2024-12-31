@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Specific User</title>
+</head>
+
+<body>
+    <h1>Chat App</h1>
+    <div id="chat-log"></div>
+    <input id="recipient" type="text" placeholder="Recipient username (or 'all')" />
+    <input id="message" type="text" placeholder="Type your message..." />
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        // Kết nối WebSocket
+        let socket = new WebSocket('ws://localhost:8080/chatUsertoAdmin');
+        const username = prompt('Enter your username:'); // Lấy username từ người dùng
+
+        let messages = []; // Mảng lưu trữ tin nhắn
+
+
+        // Khi kết nối thành công
+        socket.onopen = () => {
+            console.log('Connected to server');
+            socket.send(`join:${username}`); // Gửi sự kiện "join" cùng username
+            socket.send(`loadMessages:${username}`); // Yêu cầu load tin nhắn cũ
+        };
+
+        // Khi nhận tin nhắn
+        socket.onmessage = (event) => {
+            // const newMessages = JSON.parse(event.data); // Lấy dữ liệu từ event
+            console.log('Received messages:', event.data);
+
+            // if (Array.isArray(newMessages)) {
+            //     // Lấy những tin nhắn mới
+            //     const newMessageIds = new Set(newMessages.map(msg => msg.id));
+            //     const oldMessageIds = new Set(messages.map(msg => msg.id));
+            //     const unseenMessages = newMessages.filter(msg => !oldMessageIds.has(msg.id));
+
+            //     // Thêm tin nhắn mới vào mảng
+            //     messages = [...messages, ...unseenMessages];
+
+            //     // Hiển thị tin nhắn mới nhất
+            //     const chatLog = document.getElementById('chat-log');
+            //     chatLog.innerHTML = ''; // Clear nội dung cũ
+
+            //     messages.forEach((msg) => {
+            //         chatLog.innerHTML += `<p><strong>${msg.senderName}:</strong> ${msg.content} <small>(${msg.sentAt})</small></p>`;
+            //     });
+
+            //     // Cuộn đến tin nhắn mới nhất
+            //     chatLog.scrollTop = chatLog.scrollHeight;
+            // } else {
+            //     console.error('Invalid data format:', newMessages);
+            // }
+        };
+
+
+        // Gửi tin nhắn
+        function sendMessage() {
+            const message = document.getElementById('message').value.trim();
+            if (message === '') return;
+
+            const recipient = document.getElementById('recipient').value; // Người nhận từ input
+            const formattedMessage = `message:${recipient}:${message}`; // Định dạng gửi đến server
+            socket.send(formattedMessage); // Gửi tin nhắn
+            document.getElementById('message').value = ''; // Reset input
+        }
+
+        // // Hàm để liên tục gọi dữ liệu tin nhắn
+        // function fetchMessages() {
+        //     socket.send(`loadMessages:${username}`); // Gửi request để lấy tin nhắn mới
+        // }
+
+        // // Gọi hàm loadMessages mỗi 5 giây để load tin nhắn mới liên tục
+        // setInterval(fetchMessages, 1000); // Load tin nhắn mới mỗi 5 giây
+
+    </script>
+</body>
+
+</html>
